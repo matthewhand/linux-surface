@@ -30,7 +30,7 @@ static int check_device(int fd)
 
 static int read_report(int fd)
 {
-	/* Report 0x24 contains four 32-bit values after its report ID. */
+	/* The descriptor allows four values, but firmware can return fewer. */
 	unsigned char report[17] = {0x24};
 	int size = ioctl(fd, HIDIOCGFEATURE(sizeof(report)), report);
 
@@ -38,7 +38,8 @@ static int read_report(int fd)
 		perror("Read feature report 0x24");
 		return -1;
 	}
-	if (size != sizeof(report) || report[0] != 0x24) {
+	if (size < 5 || size > (int)sizeof(report) || (size - 1) % 4 != 0 ||
+	    report[0] != 0x24) {
 		fprintf(stderr, "Unexpected feature reply (%d bytes, ID 0x%02x).\n",
 			size, (unsigned int)report[0]);
 		return -1;
